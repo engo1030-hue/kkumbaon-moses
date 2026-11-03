@@ -3,7 +3,7 @@
 <head>
   <meta name="robots" content="noindex, nofollow">
   <script src="static/pptxgen.bundle.js"></script>
-  <script src="static/moses-web-engine.js?v=20261103_video_idb50m"></script>
+  <script src="static/moses-web-engine.js?v=20261103_video_idb2gb"></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -2106,7 +2106,7 @@
               예배 전체 영상이어도 됩니다 · 동영상(MP4, MOV, WEBM) 및 음성 녹음(M4A, MP3, WAV) 지원
             </div>
             <div style="display:inline-block; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; font-size:12px; font-weight:800; padding:4px 12px; border-radius:999px; margin-bottom:14px;">
-              💾 <b>최대 50MB 이하</b> 영상·음성은 브라우저 보관함에 <b>자동 영구 저장</b> (새로고침 후에도 유지) · 50MB 초과 대용량 영상은 무압축 즉시 스트리밍 재생
+              💾 <b>수백 MB · 1GB 이상(최대 2GB) 대용량 설교 영상</b>도 무압축 즉시 연결 & 브라우저 보관함 <b>자동 저장</b> (새로고침 후에도 유지)
             </div>
             <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;" onclick="event.stopPropagation()">
               <label class="btn btn-primary" style="cursor:pointer; margin:0; padding:11px 22px; font-size:14.5px; border-radius:999px; background:#1B4332; border-color:#1B4332;">
@@ -2155,12 +2155,12 @@
             </div>
           </div>
 
-          <!-- 최근 영상 (브라우저 자동 저장 보관함 50MB 이하 — 누르면 바로 시작) -->
+          <!-- 최근 영상 (브라우저 대용량 보관함 최대 2GB — 누르면 바로 시작) -->
           <div style="background:#FAF8F3; border:1.5px solid #E5DEC9; border-radius:16px; padding:14px 16px; margin-bottom:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
               <div>
                 <span style="font-size:13.5px; font-weight:900; color:#1E293B;">📂 최근 올린 영상 · 음성 보관함</span>
-                <span style="font-size:12px; color:#065F46; font-weight:800; margin-left:6px;">(최대 50MB 이하 파일은 새로고침 후에도 이곳에 자동 보관됩니다 — 누르면 바로 시작)</span>
+                <span style="font-size:12px; color:#065F46; font-weight:800; margin-left:6px;">(수백 MB ~ 최대 2GB 대용량 설교 영상도 새로고침 후 이곳에 자동 보관됩니다 — 누르면 바로 시작)</span>
               </div>
               <button type="button" class="mini-btn" onclick="loadRecentLocalVideos()">🔄 보관함 새로고침</button>
             </div>
@@ -4348,7 +4348,7 @@
         </div>
         <div style="background:#FFFDF6; border:1.5px dashed #D4AF37; border-radius:10px; padding:10px 12px;">
           <label style="font-weight:800; color:#70480F; display:block; margin-bottom:4px;">🎬🎙️ 방법 A: 동영상 파일(.mp4, .mov, .webm) 또는 육성 녹음(.m4a, .mp3, .wav) 직접 선택 (기본 권장 ★)</label>
-          <div style="font-size:11.5px; color:#065F46; font-weight:800; margin-bottom:6px;">💾 최대 50MB 이하 영상·음성은 브라우저에 자동 저장되어 새로고침 후에도 유지됩니다. (50MB 초과 대용량 영상도 기다림 없이 즉시 스트리밍 연결)</div>
+          <div style="font-size:11.5px; color:#065F46; font-weight:800; margin-bottom:6px;">💾 수백 MB · 1GB 이상(최대 2GB) 대용량 설교 영상도 기다림 없이 0.01초 즉시 연결되며 브라우저 보관함에 자동 저장됩니다.</div>
           <input type="file" id="modalVoiceFileInput" accept=".mp4,.mov,.webm,.mkv,.m4v,.m4a,.mp3,.wav,.aac,.ogg,.flac,video/*,audio/*" style="font-size:12.5px;" />
         </div>
         <div>
@@ -4542,11 +4542,12 @@
           alert(data.error || "파일을 불러오지 못했습니다.");
           return;
         }
+        const sizeDisp = sizeMb >= 1024 ? `${(sizeMb / 1024).toFixed(2)}GB` : `${sizeMb}MB`;
         const storageBadge = data.persisted_in_db
-          ? `<span style="margin-left:6px; background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:900;">💾 50MB 이하 브라우저 자동저장됨</span>`
-          : `<span style="margin-left:6px; background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:900;">⚡ ${sizeMb}MB 대용량 즉시 스트리밍 (50MB 초과분은 현재 세션 재생)</span>`;
+          ? `<span style="margin-left:6px; background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:900;">💾 브라우저 자동저장됨 (새로고침 유지)</span>`
+          : `<span style="margin-left:6px; background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:900;">⚡ ${sizeDisp} 초대용량 무압축 즉시 스트리밍</span>`;
         if (stEl) {
-          stEl.innerHTML = `✅ <b>${escapeHtml(f.name)}</b> (${escapeHtml(data.sermon.duration_text || "분석 완료")} · ${sizeMb}MB) 불러오기 완료! ${storageBadge}` +
+          stEl.innerHTML = `✅ <b>${escapeHtml(f.name)}</b> (${escapeHtml(data.sermon.duration_text || "분석 완료")} · ${sizeDisp}) 불러오기 완료! ${storageBadge}` +
             (data.sermon.audio_download_url ? ` <a href="${data.sermon.audio_download_url}" download="황금보컬_${escapeHtml(baseTitle)}.wav" style="margin-left:8px; color:#047857; text-decoration:underline; font-weight:900;">⬇ 보정 음성(.wav) 저장</a>` : "");
         }
         if (audEl) {
@@ -10105,7 +10106,7 @@ ${st.error || "로그를 확인해 주세요."}`);
         const data = await res.json();
         recentLocalVideosCache = (data && data.items) ? data.items : [];
         if (recentLocalVideosCache.length === 0) {
-          grid.innerHTML = `<div style="grid-column:1/-1; font-size:12.5px; color:#64748B; padding:10px; text-align:center;">최근 올린 영상·녹음 파일이 없습니다. 위 바구니에 파일을 끌어다 놓으시면 최대 50MB 이하 파일은 브라우저에 자동 저장됩니다!</div>`;
+          grid.innerHTML = `<div style="grid-column:1/-1; font-size:12.5px; color:#64748B; padding:10px; text-align:center;">최근 올린 영상·녹음 파일이 없습니다. 위 바구니에 파일을 끌어다 놓으시면 수백 MB ~ 2GB 대용량 설교 영상도 브라우저에 자동 저장됩니다!</div>`;
           return;
         }
         grid.innerHTML = recentLocalVideosCache.map((it, idx) => {
