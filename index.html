@@ -3,7 +3,7 @@
 <head>
   <meta name="robots" content="noindex, nofollow">
   <script src="static/pptxgen.bundle.js"></script>
-  <script src="static/moses-web-engine.js?v=20261103_voice_master"></script>
+  <script src="static/moses-web-engine.js?v=20261103_video_idb50m"></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -2102,8 +2102,11 @@
             <div style="font-size:21px; font-weight:900; color:#0F172A; margin-bottom:6px; letter-spacing:-0.3px;">
               설교 영상을 여기에 끌어다 놓으세요
             </div>
-            <div style="font-size:13.5px; color:#64748B; font-weight:700; margin-bottom:16px;">
-              예배 전체 영상이어도 됩니다 · 동영상(MP4, MOV) 및 음성 녹음(M4A, MP3, WAV) 지원
+            <div style="font-size:13.5px; color:#64748B; font-weight:700; margin-bottom:6px;">
+              예배 전체 영상이어도 됩니다 · 동영상(MP4, MOV, WEBM) 및 음성 녹음(M4A, MP3, WAV) 지원
+            </div>
+            <div style="display:inline-block; background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46; font-size:12px; font-weight:800; padding:4px 12px; border-radius:999px; margin-bottom:14px;">
+              💾 <b>최대 50MB 이하</b> 영상·음성은 브라우저 보관함에 <b>자동 영구 저장</b> (새로고침 후에도 유지) · 50MB 초과 대용량 영상은 무압축 즉시 스트리밍 재생
             </div>
             <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;" onclick="event.stopPropagation()">
               <label class="btn btn-primary" style="cursor:pointer; margin:0; padding:11px 22px; font-size:14.5px; border-radius:999px; background:#1B4332; border-color:#1B4332;">
@@ -2152,14 +2155,14 @@
             </div>
           </div>
 
-          <!-- 최근 영상 (다운로드 · 동영상 · 바탕화면 폴더 — 누르면 바로 시작) -->
+          <!-- 최근 영상 (브라우저 자동 저장 보관함 50MB 이하 — 누르면 바로 시작) -->
           <div style="background:#FAF8F3; border:1.5px solid #E5DEC9; border-radius:16px; padding:14px 16px; margin-bottom:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
               <div>
-                <span style="font-size:13.5px; font-weight:900; color:#1E293B;">📂 최근 영상</span>
-                <span style="font-size:12px; color:#64748B; font-weight:700; margin-left:6px;">다운로드 · 동영상 · 바탕화면 폴더 — 누르면 바로 시작</span>
+                <span style="font-size:13.5px; font-weight:900; color:#1E293B;">📂 최근 올린 영상 · 음성 보관함</span>
+                <span style="font-size:12px; color:#065F46; font-weight:800; margin-left:6px;">(최대 50MB 이하 파일은 새로고침 후에도 이곳에 자동 보관됩니다 — 누르면 바로 시작)</span>
               </div>
-              <button type="button" class="mini-btn" onclick="loadRecentLocalVideos()">🔄 폴더 새로고침</button>
+              <button type="button" class="mini-btn" onclick="loadRecentLocalVideos()">🔄 보관함 새로고침</button>
             </div>
             <div id="recentLocalVideosGrid" class="recent-videos-grid">
               <div style="grid-column:1/-1; font-size:12.5px; color:#64748B; padding:10px; text-align:center;">최근 영상 파일을 불러오는 중입니다...</div>
@@ -4344,7 +4347,8 @@
           </div>
         </div>
         <div style="background:#FFFDF6; border:1.5px dashed #D4AF37; border-radius:10px; padding:10px 12px;">
-          <label style="font-weight:800; color:#70480F; display:block; margin-bottom:6px;">🎬🎙️ 방법 A: 동영상 파일(.mp4, .mov) 또는 육성 녹음(.m4a, .mp3) 직접 선택 (기본 권장 ★)</label>
+          <label style="font-weight:800; color:#70480F; display:block; margin-bottom:4px;">🎬🎙️ 방법 A: 동영상 파일(.mp4, .mov, .webm) 또는 육성 녹음(.m4a, .mp3, .wav) 직접 선택 (기본 권장 ★)</label>
+          <div style="font-size:11.5px; color:#065F46; font-weight:800; margin-bottom:6px;">💾 최대 50MB 이하 영상·음성은 브라우저에 자동 저장되어 새로고침 후에도 유지됩니다. (50MB 초과 대용량 영상도 기다림 없이 즉시 스트리밍 연결)</div>
           <input type="file" id="modalVoiceFileInput" accept=".mp4,.mov,.webm,.mkv,.m4v,.m4a,.mp3,.wav,.aac,.ogg,.flac,video/*,audio/*" style="font-size:12.5px;" />
         </div>
         <div>
@@ -4392,6 +4396,14 @@
 
   <script>
     // 🛡️ [보안 & 백업 헬퍼] XSS 방지 escapeHtml 및 데이터 복원 유틸리티
+    window._webDirectFileRegistry = window._webDirectFileRegistry || {};
+    window.registerWebMediaFile = function(fileOrBlob) {
+      if (!fileOrBlob) return "";
+      const token = "f_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+      window._webDirectFileRegistry[token] = fileOrBlob;
+      return token;
+    };
+
     function escapeHtml(str) {
       if (str === null || str === undefined) return "";
       return String(str)
@@ -4487,25 +4499,36 @@
       const f = inputEl && inputEl.files && inputEl.files[0];
       if (!f) return;
       const baseTitle = f.name.replace(/\.[^/.]+$/, "");
+      const sizeMb = +(f.size / (1024 * 1024)).toFixed(1);
+      const isVideoFile = /\.(mp4|mov|webm|mkv|m4v)$/i.test(f.name) || (f.type && f.type.startsWith("video/"));
       const stEl = document.getElementById("sermonCustomVoiceStatus");
       const audEl = document.getElementById("sermonVoicePreviewAudio");
       if (stEl) {
-        stEl.textContent = `⏳ 「${f.name}」 파일을 불러와 황금 보컬 마스터링 및 쇼츠 구간 분석 중...`;
+        stEl.textContent = isVideoFile
+          ? `⏳ 「${f.name}」 (${sizeMb}MB) 동영상 즉시 스트리밍 연결 및 쇼츠 구간 분석 중...`
+          : `⏳ 「${f.name}」 (${sizeMb}MB) 파일을 불러와 황금 보컬 마스터링 및 쇼츠 구간 분석 중...`;
       }
       try {
-        const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
-          reader.onerror = e => reject(e);
-          reader.readAsDataURL(f);
-        });
+        const fileToken = window.registerWebMediaFile(f);
+        let dataUrl = "";
+        if (!isVideoFile && f.size <= 15 * 1024 * 1024) {
+          dataUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result || "");
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(f);
+          });
+        }
         const res = await fetch("/api/upload-voice-as-sermon", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             filename: f.name,
+            file_token: fileToken,
+            file_size: f.size,
+            mime_type: f.type || "",
             data_base64: dataUrl,
-            title: `[내음성·영상] ${baseTitle}`,
+            title: isVideoFile ? `[설교영상] ${baseTitle}` : `[내음성·묵상] ${baseTitle}`,
             bible_verse: customStyle.bible_verse || "오늘의 말씀",
             church_name: customStyle.church_name || "우리교회",
             script_text: "",
@@ -4519,14 +4542,22 @@
           alert(data.error || "파일을 불러오지 못했습니다.");
           return;
         }
+        const storageBadge = data.persisted_in_db
+          ? `<span style="margin-left:6px; background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:900;">💾 50MB 이하 브라우저 자동저장됨</span>`
+          : `<span style="margin-left:6px; background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:900;">⚡ ${sizeMb}MB 대용량 즉시 스트리밍 (50MB 초과분은 현재 세션 재생)</span>`;
         if (stEl) {
-          stEl.innerHTML = `✅ <b>${escapeHtml(f.name)}</b> (${escapeHtml(data.sermon.duration_text || "분석 완료")}) 불러오기 완료!` +
+          stEl.innerHTML = `✅ <b>${escapeHtml(f.name)}</b> (${escapeHtml(data.sermon.duration_text || "분석 완료")} · ${sizeMb}MB) 불러오기 완료! ${storageBadge}` +
             (data.sermon.audio_download_url ? ` <a href="${data.sermon.audio_download_url}" download="황금보컬_${escapeHtml(baseTitle)}.wav" style="margin-left:8px; color:#047857; text-decoration:underline; font-weight:900;">⬇ 보정 음성(.wav) 저장</a>` : "");
         }
-        if (audEl && data.sermon.video_url) {
-          audEl.src = data.sermon.video_url;
-          audEl.style.display = "block";
-          audEl.load();
+        if (audEl) {
+          if (data.sermon.is_audio_only && data.sermon.video_url) {
+            audEl.src = data.sermon.video_url;
+            audEl.style.display = "block";
+            audEl.load();
+          } else {
+            audEl.pause();
+            audEl.style.display = "none";
+          }
         }
         appData.samples.unshift(data.sermon);
         const sel = document.getElementById("sermonSelect");
@@ -4537,6 +4568,7 @@
           sel.value = "0";
         }
         onSelectSermon(0);
+        loadRecentLocalVideos();
         renderSermonAiNotice(data.ai_notice || "", !data.ai_notice, data.ai_model || "");
         if (typeof switchSermonWizardStep === "function") {
           switchSermonWizardStep(2);
@@ -4594,16 +4626,25 @@
 
       try {
         if (voiceFile) {
-          const dataUrl = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = e => resolve(e.target.result);
-            reader.readAsDataURL(voiceFile);
-          });
+          const isVideoFile = /\.(mp4|mov|webm|mkv|m4v)$/i.test(voiceFile.name) || (voiceFile.type && voiceFile.type.startsWith("video/"));
+          const fileToken = window.registerWebMediaFile(voiceFile);
+          let dataUrl = "";
+          if (!isVideoFile && voiceFile.size <= 15 * 1024 * 1024) {
+            dataUrl = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = e => resolve(e.target.result || "");
+              reader.onerror = () => resolve("");
+              reader.readAsDataURL(voiceFile);
+            });
+          }
           const res = await fetch("/api/upload-voice-as-sermon", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               filename: voiceFile.name,
+              file_token: fileToken,
+              file_size: voiceFile.size,
+              mime_type: voiceFile.type || "",
               data_base64: dataUrl,
               title,
               bible_verse: verse,
@@ -4625,10 +4666,11 @@
           ).join("");
           sel.value = "0";
           onSelectSermon(0);
+          loadRecentLocalVideos();
           closeModal("addSermonModal");
           renderSermonAiNotice(data.ai_notice || "", !data.ai_notice, data.ai_model || "");
-          if (data.ai_notice) {
-            alert(data.ai_notice);
+          if (typeof switchSermonWizardStep === "function") {
+            switchSermonWizardStep(2);
           }
           return;
         }
@@ -6778,20 +6820,26 @@ ${st.error || "로그를 확인해 주세요."}`);
     }
 
     function loadAiAttachmentFile(fileObj) {
+      if (!fileObj) return;
+      const isVid = (fileObj.type && fileObj.type.startsWith("video/")) || /\.(mp4|mov|webm|mkv|m4v)$/i.test(fileObj.name || "");
+      if (isVid) {
+        // 동영상인 경우 대용량도 메모리 멈춤 없이 즉시 Blob URL + 파일 토큰으로 우측 미디어 보드에 세팅
+        const blobUrl = URL.createObjectURL(fileObj);
+        const fTok = window.registerWebMediaFile(fileObj);
+        aiDroppedMediaData = {
+          type: "video",
+          filename: fileObj.name || "gemini_video.mp4",
+          base64: blobUrl,
+          file_token: fTok,
+          file_size: fileObj.size || 0,
+          mime: fileObj.type || "video/mp4"
+        };
+        renderAiDroppedMediaPreview();
+        return;
+      }
       const reader = new FileReader();
       reader.onload = e => {
         const dataUrl = e.target.result || "";
-        if (fileObj.type && fileObj.type.startsWith("video/")) {
-          // 동영상인 경우 우측 미디어 보드에 즉시 세팅
-          aiDroppedMediaData = {
-            type: "video",
-            filename: fileObj.name || "gemini_video.mp4",
-            base64: dataUrl,
-            mime: fileObj.type || "video/mp4"
-          };
-          renderAiDroppedMediaPreview();
-          return;
-        }
         aiChatAttachedImageBase64 = dataUrl;
         aiChatAttachedImageMime = fileObj.type || "image/jpeg";
         const bar = document.getElementById("aiChatAttachedImgBar");
@@ -7196,17 +7244,22 @@ ${st.error || "로그를 확인해 주세요."}`);
           body: JSON.stringify({
             items: [{
               filename: aiDroppedMediaData.filename,
-              data_base64: aiDroppedMediaData.base64
+              file_token: aiDroppedMediaData.file_token || "",
+              data_base64: aiDroppedMediaData.type === "video" ? "" : aiDroppedMediaData.base64
             }]
           })
         });
         const data = await res.json();
-        if (data.ok && data.items && data.items.length > 0) {
-          data.items.forEach(it => {
+        const uploadedList = data.uploaded || data.items || [];
+        if (data.ok && uploadedList.length > 0) {
+          uploadedList.forEach(it => {
             montageSlides.push({
+              id: it.id || it.filename,
+              name: it.name || it.orig_name || it.filename,
               artwork_id: it.filename,
               orig_name: it.orig_name || it.filename,
               url: it.url,
+              media_type: it.media_type || (aiDroppedMediaData.type === "video" ? "video" : "image"),
               caption: "은혜와 감동의 순간"
             });
           });
@@ -7221,7 +7274,48 @@ ${st.error || "로그를 확인해 주세요."}`);
 
     async function sendDroppedVideoToStudio1() {
       if (!aiDroppedMediaData || aiDroppedMediaData.type !== "video") return;
-      await sendDroppedMediaToMontage();
+      try {
+        const baseTitle = (aiDroppedMediaData.filename || "AI_영상").replace(/\.[^/.]+$/, "");
+        const res = await fetch("/api/upload-voice-as-sermon", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: aiDroppedMediaData.filename || "gemini_video.mp4",
+            file_token: aiDroppedMediaData.file_token || "",
+            file_size: aiDroppedMediaData.file_size || 0,
+            mime_type: aiDroppedMediaData.mime || "video/mp4",
+            data_base64: "",
+            title: `[설교·AI영상] ${baseTitle}`,
+            bible_verse: customStyle.bible_verse || "오늘의 말씀",
+            church_name: customStyle.church_name || "우리교회",
+            script_text: "",
+            artwork_id: customStyle.artwork_id !== "none" ? customStyle.artwork_id : "art_05",
+            target_count: targetShortsCount || 4
+          })
+        });
+        const data = await res.json();
+        if (data.ok && data.sermon) {
+          appData.samples.unshift(data.sermon);
+          const sel = document.getElementById("sermonSelect");
+          if (sel) {
+            sel.innerHTML = appData.samples.map((s, idx) =>
+              `<option value="${idx}">${escapeHtml(s.title)} (${escapeHtml(s.bible_verse)}) — ${escapeHtml(s.duration_text)}</option>`
+            ).join("");
+            sel.value = "0";
+          }
+          onSelectSermon(0);
+          loadRecentLocalVideos();
+          switchStudioMode("sermon");
+          if (typeof switchSermonWizardStep === "function") {
+            switchSermonWizardStep(2);
+          }
+          alert("✅ 영상이 스튜디오 1 (설교 ➔ 쇼츠 4개)에 등록되었습니다! (최대 50MB 이하 영상은 브라우저에 자동 저장됩니다)");
+        } else {
+          alert(data.error || "스튜디오 1 영상 전송 실패");
+        }
+      } catch (e) {
+        alert("스튜디오 1 전송 중 오류가 발생했습니다.");
+      }
     }
 
     // 🌟 화면 어디서든 Ctrl+V (클립보드 이미지/텍스트 붙여넣기) 자동 감지
@@ -7809,18 +7903,24 @@ ${st.error || "로그를 확인해 주세요."}`);
       if (badgeEl) badgeEl.textContent = `⏳ 「${f.name}」 육성 음질 보정(황금 보컬 마스터링) 중...`;
 
       try {
-        const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
-          reader.onerror = e => reject(e);
-          reader.readAsDataURL(f);
-        });
+        const fileToken = window.registerWebMediaFile(f);
+        let dataUrl = "";
+        if (f.size <= 15 * 1024 * 1024) {
+          dataUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result || "");
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(f);
+          });
+        }
 
         const res = await fetch("/api/upload-voice", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             filename: f.name,
+            file_token: fileToken,
+            file_size: f.size,
             data_base64: dataUrl
           })
         });
@@ -7934,11 +8034,16 @@ ${st.error || "로그를 확인해 주세요."}`);
             return;
           }
 
-          const dataUrl = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = e => resolve(e.target.result);
-            reader.readAsDataURL(blob);
-          });
+          const fileToken = window.registerWebMediaFile(blob);
+          let dataUrl = "";
+          if (blob.size <= 15 * 1024 * 1024) {
+            dataUrl = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = e => resolve(e.target.result || "");
+              reader.onerror = () => resolve("");
+              reader.readAsDataURL(blob);
+            });
+          }
 
           const audioEl = document.getElementById(studio + "VoicePreviewAudio") || document.getElementById(studio + "CustomVoiceAudio");
           const selEl = document.getElementById(studio + "VoiceSelect");
@@ -7950,6 +8055,8 @@ ${st.error || "로그를 확인해 주세요."}`);
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 filename: `마이크녹음_설교묵상.${ext}`,
+                file_token: fileToken,
+                file_size: blob.size,
                 data_base64: dataUrl,
                 title: `[마이크 육성 녹음] 오늘의 말씀 묵상`,
                 bible_verse: customStyle.bible_verse || "오늘의 말씀",
@@ -7962,7 +8069,7 @@ ${st.error || "로그를 확인해 주세요."}`);
             const data = await res.json();
             if (data.ok && data.sermon) {
               if (badgeEl) {
-                badgeEl.innerHTML = `✅ <b>마이크 직접 녹음 완료</b> (${escapeHtml(data.sermon.duration_text)})` +
+                badgeEl.innerHTML = `✅ <b>마이크 직접 녹음 완료</b> (${escapeHtml(data.sermon.duration_text)} · 💾 브라우저 자동저장됨)` +
                   (data.sermon.audio_download_url ? ` <a href="${data.sermon.audio_download_url}" download="마이크녹음_황금보컬.wav" style="margin-left:8px; color:#047857; text-decoration:underline; font-weight:900;">⬇ 보정 음성(.wav) 저장</a>` : "");
               }
               if (audioEl && data.sermon.video_url) {
@@ -7979,6 +8086,7 @@ ${st.error || "로그를 확인해 주세요."}`);
                 sel.value = "0";
               }
               onSelectSermon(0);
+              loadRecentLocalVideos();
               if (typeof switchSermonWizardStep === "function") {
                 switchSermonWizardStep(2);
               }
@@ -7993,6 +8101,8 @@ ${st.error || "로그를 확인해 주세요."}`);
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               filename: `마이크녹음_${studio}.${ext}`,
+              file_token: fileToken,
+              file_size: blob.size,
               data_base64: dataUrl
             })
           });
@@ -8644,12 +8754,18 @@ ${st.error || "로그를 확인해 주세요."}`);
 
       const encodedItems = [];
       for (const f of files) {
-        const dataUrl = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
-          reader.readAsDataURL(f);
-        });
-        encodedItems.push({ filename: f.name, data_base64: dataUrl });
+        const isVid = (f.type && f.type.startsWith("video/")) || /\.(mp4|mov|webm|mkv|m4v)$/i.test(f.name || "");
+        const fileToken = window.registerWebMediaFile(f);
+        let dataUrl = "";
+        if (!isVid && f.size <= 15 * 1024 * 1024) {
+          dataUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result || "");
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(f);
+          });
+        }
+        encodedItems.push({ filename: f.name, file_token: fileToken, file_size: f.size, data_base64: dataUrl });
       }
 
       const res = await fetch("/api/upload-montage-media", {
@@ -8668,6 +8784,7 @@ ${st.error || "로그를 확인해 주세요."}`);
       } else {
         alert(data.error || "파일 업로드 중 오류가 발생했습니다.");
       }
+      try { if (inputEl && "value" in inputEl) inputEl.value = ""; } catch (e) {}
     }
 
     async function startRenderMontage() {
@@ -9988,25 +10105,45 @@ ${st.error || "로그를 확인해 주세요."}`);
         const data = await res.json();
         recentLocalVideosCache = (data && data.items) ? data.items : [];
         if (recentLocalVideosCache.length === 0) {
-          grid.innerHTML = `<div style="grid-column:1/-1; font-size:12.5px; color:#64748B; padding:10px; text-align:center;">다운로드 · 동영상 · 바탕화면 폴더에 최근 영상/녹음 파일이 없습니다. 위 바구니에 파일을 끌어다 놓으세요!</div>`;
+          grid.innerHTML = `<div style="grid-column:1/-1; font-size:12.5px; color:#64748B; padding:10px; text-align:center;">최근 올린 영상·녹음 파일이 없습니다. 위 바구니에 파일을 끌어다 놓으시면 최대 50MB 이하 파일은 브라우저에 자동 저장됩니다!</div>`;
           return;
         }
-        grid.innerHTML = recentLocalVideosCache.map((it, idx) => `
-          <div class="recent-video-card" onclick="openRecentLocalVideo(${idx})">
+        grid.innerHTML = recentLocalVideosCache.map((it, idx) => {
+          const badgeHtml = it.persisted_in_db
+            ? `<span style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; padding:1px 6px; border-radius:999px; font-size:10.5px; font-weight:900;">💾 자동저장</span>`
+            : `<span style="background:#F1F5F9; color:#475569; padding:1px 6px; border-radius:999px; font-size:10.5px; font-weight:800;">${escapeHtml(it.folder_label)}</span>`;
+          const delBtnHtml = it.is_user_uploaded
+            ? `<button type="button" onclick="deleteRecentSavedVideo('${escapeHtml(it.path)}', event)" title="보관함에서 삭제" style="background:none; border:none; color:#94A3B8; font-size:13px; cursor:pointer; padding:4px; line-height:1;">🗑️</button>`
+            : ``;
+          return `
+          <div class="recent-video-card" onclick="openRecentLocalVideo(${idx})" style="position:relative;">
             <div style="width:42px; height:42px; border-radius:12px; background:${it.media_type === 'video' ? '#1B4332' : '#9C6B19'}; color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
               ${it.media_type === 'video' ? '🎬' : '🎙️'}
             </div>
             <div style="min-width:0; flex:1;">
               <div style="font-size:13px; font-weight:900; color:#0F172A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(it.filename)}">${escapeHtml(it.title)}</div>
-              <div style="font-size:11.5px; color:#64748B; font-weight:700; margin-top:2px;">
-                <span style="color:#1B4332; font-weight:800;">${escapeHtml(it.folder_label)}</span> · ${escapeHtml(it.mtime_str)} · ${it.size_mb}MB
+              <div style="font-size:11.5px; color:#64748B; font-weight:700; margin-top:2px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                ${badgeHtml} <span>· ${escapeHtml(it.mtime_str)} · ${it.size_mb}MB</span>
               </div>
             </div>
+            ${delBtnHtml}
           </div>
-        `).join("");
+        `}).join("");
       } catch (e) {
         grid.innerHTML = `<div style="grid-column:1/-1; font-size:12.5px; color:#64748B; padding:10px; text-align:center;">최근 영상 목록을 불러오지 못했습니다.</div>`;
       }
+    }
+
+    async function deleteRecentSavedVideo(vpath, ev) {
+      if (ev) ev.stopPropagation();
+      try {
+        await fetch("/api/delete-recent-video", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ video_path: vpath })
+        });
+        loadRecentLocalVideos();
+      } catch (e) {}
     }
 
     async function openRecentLocalVideo(idx) {
