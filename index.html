@@ -3,7 +3,7 @@
 <head>
   <meta name="robots" content="noindex, nofollow">
   <script src="static/pptxgen.bundle.js"></script>
-  <script src="static/moses-web-engine.js"></script>
+  <script src="static/moses-web-engine.js?v=20261103_voice_master"></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -2110,10 +2110,15 @@
                 📂 영상 · 녹음 파일 고르기
                 <input type="file" id="basketQuickFileInput" accept=".mp4,.mov,.webm,.mkv,.m4v,.m4a,.mp3,.wav,.aac,.ogg,.flac,video/*,audio/*" style="display:none;" onchange="quickUploadVoiceToStudio1(this)" />
               </label>
+              <button type="button" class="btn btn-outline" id="btnMicRecord_sermon" style="border-radius:999px; padding:11px 18px; font-size:13.5px; background:#FFFFFF; border-color:#E03131; color:#C92A2A; font-weight:800;" onclick="toggleBrowserMicRecord('sermon', this)">
+                🔴 지금 마이크로 바로 녹음
+              </button>
               <button type="button" class="btn btn-outline" style="border-radius:999px; padding:11px 18px; font-size:13.5px;" onclick="openAddSermonModal()">
                 📝 대본(SRT)과 함께 상세 등록
               </button>
             </div>
+            <div id="sermonCustomVoiceStatus" style="margin-top:10px; font-size:13px; font-weight:800; color:#1B4332;"></div>
+            <audio id="sermonVoicePreviewAudio" controls onclick="event.stopPropagation()" style="display:none; width:100%; max-width:440px; height:36px; margin:8px auto 0;"></audio>
           </div>
 
           <!-- 만들 것 5가지 빠른 선택 카드 -->
@@ -2181,6 +2186,9 @@
               🎙️🎬 영상 · 육성 파일 원클릭 즉시 불러오기
               <input type="file" accept=".mp4,.mov,.webm,.mkv,.m4v,.m4a,.mp3,.wav,.aac,.ogg,.flac,video/*,audio/*" style="display:none;" onchange="quickUploadVoiceToStudio1(this)" />
             </label>
+            <button type="button" class="btn btn-outline" style="background:#FFFFFF; border-color:#E03131; color:#C92A2A; font-weight:800;" onclick="toggleBrowserMicRecord('sermon', this)">
+              🔴 마이크로 바로 녹음
+            </button>
             <button class="btn btn-outline" onclick="reAnalyzeWithAI()">✨ AI 핵심 구간 재분석</button>
             <button class="btn btn-outline" onclick="autoCorrectAllSubtitles()">🪄 성경 용어·자막 자동 교정</button>
           </div>
@@ -4476,57 +4484,69 @@
     }
 
     async function quickUploadVoiceToStudio1(inputEl) {
-      const f = inputEl.files && inputEl.files[0];
+      const f = inputEl && inputEl.files && inputEl.files[0];
       if (!f) return;
       const baseTitle = f.name.replace(/\.[^/.]+$/, "");
-      const isVideo = /\.(mp4|mov|webm|mkv|m4v)$/i.test(f.name);
-      const promptMsg = isVideo
-        ? `🎬 「${f.name}」 설교 영상 파일을 스튜디오로 불러옵니다!
-
-혹시 설교 대본이나 자막이 있으시다면 아래에 붙여넣어 주세요 (비워두셔도 영상 그대로 은혜로운 쇼츠로 제작됩니다):`
-        : `🎙️ 「${f.name}」 육성 파일을 꿈바온 시그니처 스튜디오로 불러옵니다!
-
-녹음하신 대본이 있다면 아래에 붙여넣어 주세요 (비워두셔도 자동으로 기본 자막이 생성되며 나중에 수정할 수 있습니다):`;
-      const scriptTxt = prompt(promptMsg, "");
-      const dataUrl = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result);
-        reader.readAsDataURL(f);
-      });
-      const res = await fetch("/api/upload-voice-as-sermon", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: f.name,
-          data_base64: dataUrl,
-          title: `[육성 묵상] ${baseTitle}`,
-          bible_verse: customStyle.bible_verse || "오늘의 말씀",
-          church_name: customStyle.church_name || "우리교회",
-          script_text: scriptTxt || "",
-          artwork_id: customStyle.artwork_id !== "none" ? customStyle.artwork_id : "art_05",
-          target_count: targetShortsCount
-        })
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        alert(data.error || "파일을 불러오지 못했습니다.");
-        return;
+      const stEl = document.getElementById("sermonCustomVoiceStatus");
+      const audEl = document.getElementById("sermonVoicePreviewAudio");
+      if (stEl) {
+        stEl.textContent = `⏳ 「${f.name}」 파일을 불러와 황금 보컬 마스터링 및 쇼츠 구간 분석 중...`;
       }
-      appData.samples.unshift(data.sermon);
-      const sel = document.getElementById("sermonSelect");
-      sel.innerHTML = appData.samples.map((s, idx) =>
-        `<option value="${idx}">${escapeHtml(s.title)} (${escapeHtml(s.bible_verse)}) — ${escapeHtml(s.duration_text)}</option>`
-      ).join("");
-      sel.value = "0";
-      onSelectSermon(0);
-      renderSermonAiNotice(data.ai_notice || "", !data.ai_notice, data.ai_model || "");
-      if (typeof switchSermonWizardStep === "function") {
-        switchSermonWizardStep(2);
-      }
-      if (data.ai_notice) {
-        alert(`✅ 「${f.name}」 불러오기 완료!\n\n${data.ai_notice}`);
-      } else {
-        alert(`✅ 「${f.name}」 파일이 황금 보컬 마스터링과 함께 불러와졌습니다!\n\n이제 ② 완성본 고르기에서 마음에 드는 쇼츠를 확인하세요.`);
+      try {
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = e => resolve(e.target.result);
+          reader.onerror = e => reject(e);
+          reader.readAsDataURL(f);
+        });
+        const res = await fetch("/api/upload-voice-as-sermon", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: f.name,
+            data_base64: dataUrl,
+            title: `[내음성·영상] ${baseTitle}`,
+            bible_verse: customStyle.bible_verse || "오늘의 말씀",
+            church_name: customStyle.church_name || "우리교회",
+            script_text: "",
+            artwork_id: customStyle.artwork_id !== "none" ? customStyle.artwork_id : "art_05",
+            target_count: targetShortsCount || 4
+          })
+        });
+        const data = await res.json();
+        if (!data.ok || !data.sermon) {
+          if (stEl) stEl.textContent = `❌ 불러오기 실패: ${data.error || "파일 형식을 확인해 주세요."}`;
+          alert(data.error || "파일을 불러오지 못했습니다.");
+          return;
+        }
+        if (stEl) {
+          stEl.innerHTML = `✅ <b>${escapeHtml(f.name)}</b> (${escapeHtml(data.sermon.duration_text || "분석 완료")}) 불러오기 완료!` +
+            (data.sermon.audio_download_url ? ` <a href="${data.sermon.audio_download_url}" download="황금보컬_${escapeHtml(baseTitle)}.wav" style="margin-left:8px; color:#047857; text-decoration:underline; font-weight:900;">⬇ 보정 음성(.wav) 저장</a>` : "");
+        }
+        if (audEl && data.sermon.video_url) {
+          audEl.src = data.sermon.video_url;
+          audEl.style.display = "block";
+          audEl.load();
+        }
+        appData.samples.unshift(data.sermon);
+        const sel = document.getElementById("sermonSelect");
+        if (sel) {
+          sel.innerHTML = appData.samples.map((s, idx) =>
+            `<option value="${idx}">${escapeHtml(s.title)} (${escapeHtml(s.bible_verse)}) — ${escapeHtml(s.duration_text)}</option>`
+          ).join("");
+          sel.value = "0";
+        }
+        onSelectSermon(0);
+        renderSermonAiNotice(data.ai_notice || "", !data.ai_notice, data.ai_model || "");
+        if (typeof switchSermonWizardStep === "function") {
+          switchSermonWizardStep(2);
+        }
+      } catch (err) {
+        console.error("quickUploadVoiceToStudio1 error:", err);
+        if (stEl) stEl.textContent = "❌ 파일을 읽는 중 오류가 발생했습니다.";
+        alert("파일을 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        try { if (inputEl && "value" in inputEl) inputEl.value = ""; } catch (e) {}
       }
     }
 
@@ -5445,10 +5465,18 @@
       }
 
       const videoEl = document.getElementById("previewVideo");
-      if (currentSermon.video_path) {
+      if (currentSermon.video_url || currentSermon.video_path) {
         videoEl.muted = false;
         videoEl.volume = 1.0;
-        videoEl.src = `/api/video-stream?path=${encodeURIComponent(currentSermon.video_path)}&v=${Date.now()}`;
+        const mappedUrl = currentSermon.video_url || (window._webMediaUrlMap && window._webMediaUrlMap[currentSermon.video_path]);
+        const vPath = String(currentSermon.video_path || "");
+        if (mappedUrl) {
+          videoEl.src = mappedUrl;
+        } else if (vPath.startsWith("sample_data/") || vPath.startsWith("blob:") || vPath.startsWith("data:") || vPath.startsWith("http")) {
+          videoEl.src = vPath;
+        } else {
+          videoEl.src = "sample_data/sample_sermon_demo.mp4";
+        }
         videoEl.load();
       }
 
@@ -5895,11 +5923,13 @@
         }
       }
 
-      // 성화 인트로 3초 미리보기 레이어
+      // 성화 인트로 3초 미리보기 레이어 (순수 음성 녹음본일 때는 성화 상시 노출)
       const curRelTime = vEl.currentTime - (clip ? clip.start : 0);
-      const shouldShowIntroArt = hasArt && (customStyle.artwork_mode === "intro_3s" || customStyle.artwork_mode === "both") && (forceShowIntroArt || (!vEl.paused && curRelTime >= 0 && curRelTime <= 2.6));
-      if (shouldShowIntroArt) {
-        introArtImg.src = selectedArt.url;
+      const isAudioOnly = Boolean(currentSermon && currentSermon.is_audio_only);
+      const fallbackArt = selectedArt || (appData.artwork_list || []).find(a => a.id === "art_05") || (appData.artwork_list || [])[1];
+      const shouldShowIntroArt = isAudioOnly || (hasArt && (customStyle.artwork_mode === "intro_3s" || customStyle.artwork_mode === "both") && (forceShowIntroArt || (!vEl.paused && curRelTime >= 0 && curRelTime <= 2.6)));
+      if (shouldShowIntroArt && fallbackArt && fallbackArt.url) {
+        introArtImg.src = (hasArt ? selectedArt.url : fallbackArt.url);
         introArtImg.style.display = "block";
       } else {
         introArtImg.style.display = "none";
@@ -6082,8 +6112,11 @@
           vEl.currentTime = clip.start;
         }
         updateLiveSubtitle(t);
-        // 인트로 성화 2.6초 자동 전환 반영
-        if (customStyle.artwork_id !== "none" && (customStyle.artwork_mode === "intro_3s" || customStyle.artwork_mode === "both")) {
+        // 인트로 성화 2.6초 자동 전환 반영 (순수 음성일 때는 상시 표시)
+        if (currentSermon && currentSermon.is_audio_only) {
+          const introArtImg = document.getElementById("phoneIntroArtImg");
+          if (introArtImg) introArtImg.style.display = "block";
+        } else if (customStyle.artwork_id !== "none" && (customStyle.artwork_mode === "intro_3s" || customStyle.artwork_mode === "both")) {
           const introArtImg = document.getElementById("phoneIntroArtImg");
           const relT = t - (clip ? clip.start : 0);
           if (forceShowIntroArt || (relT >= 0 && relT <= 2.6)) {
@@ -7760,46 +7793,62 @@ ${st.error || "로그를 확인해 주세요."}`);
     // =========================================================================
     // 🎙️ 전 템플릿 스튜디오 공통: 내 육성 녹음 파일 업로드 & 브라우저 마이크 직접 녹음
     // =========================================================================
-    const customVoicePaths = { read: "", ev: "", mon: "" };
+    const customVoicePaths = { read: "", ev: "", mon: "", sermon: "" };
     let activeMicRecorder = null;
     let activeMicChunks = [];
     let activeMicStudio = "";
+    let activeMicTimer = null;
+    let activeMicStartSec = 0;
 
     async function onUploadCustomVoice(studio, inputEl) {
-      const f = inputEl.files && inputEl.files[0];
+      const f = inputEl && inputEl.files && inputEl.files[0];
       if (!f) return;
       const badgeEl = document.getElementById(studio + "CustomVoiceStatus") || document.getElementById(studio + "CustomVoiceBadge");
       const audioEl = document.getElementById(studio + "VoicePreviewAudio") || document.getElementById(studio + "CustomVoiceAudio");
       const selEl = document.getElementById(studio + "VoiceSelect");
-      if (badgeEl) badgeEl.textContent = "⏳ 육성 음질 보정 중...";
+      if (badgeEl) badgeEl.textContent = `⏳ 「${f.name}」 육성 음질 보정(황금 보컬 마스터링) 중...`;
 
-      const dataUrl = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result);
-        reader.readAsDataURL(f);
-      });
+      try {
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = e => resolve(e.target.result);
+          reader.onerror = e => reject(e);
+          reader.readAsDataURL(f);
+        });
 
-      const res = await fetch("/api/upload-voice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: f.name,
-          data_base64: dataUrl
-        })
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        alert(data.error || "육성 파일을 불러오지 못했습니다.");
-        if (badgeEl) badgeEl.textContent = "선택된 육성 없음";
-        return;
-      }
+        const res = await fetch("/api/upload-voice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: f.name,
+            data_base64: dataUrl
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          alert(data.error || "육성 파일을 불러오지 못했습니다.");
+          if (badgeEl) badgeEl.textContent = "선택된 육성 없음";
+          return;
+        }
 
-      customVoicePaths[studio] = data.path || "";
-      if (selEl) selEl.value = "custom_voice";
-      if (badgeEl) badgeEl.textContent = `✓ ${f.name} (${data.duration}초 · 황금보컬적용)`;
-      if (audioEl && data.url) {
-        audioEl.src = data.url;
-        audioEl.style.display = "inline-block";
+        customVoicePaths[studio] = data.path || "";
+        if (selEl) selEl.value = "custom_voice";
+        const baseName = f.name.replace(/\.[^/.]+$/, "");
+        if (badgeEl) {
+          badgeEl.innerHTML = `✓ <b>${escapeHtml(f.name)}</b> (${data.duration}초 · 황금보컬적용)` +
+            (data.url ? ` <a href="${data.url}" download="황금보컬_${escapeHtml(baseName)}.wav" style="margin-left:8px; color:#047857; text-decoration:underline; font-weight:900;">⬇ 보정음성(.wav) 저장</a>` : "");
+        }
+        if (audioEl && data.url) {
+          audioEl.src = data.url;
+          audioEl.style.display = "block";
+          audioEl.load();
+        }
+      } catch (err) {
+        console.error("onUploadCustomVoice error:", err);
+        alert("음성 파일을 불러오는 중 오류가 발생했습니다.");
+        if (badgeEl) badgeEl.textContent = "음성 파일 업로드 실패";
+      } finally {
+        try { if (inputEl && "value" in inputEl) inputEl.value = ""; } catch (e) {}
       }
     }
 
@@ -7809,42 +7858,141 @@ ${st.error || "로그를 확인해 주세요."}`);
         return;
       }
 
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("현재 브라우저 환경에서 마이크 녹음을 지원하지 않습니다. 음성 파일(.m4a/.mp3/.wav) 올리기를 이용해 주세요.");
+        return;
+      }
+
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+          });
+        } catch (_) {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+
         activeMicChunks = [];
         activeMicStudio = studio;
-        activeMicRecorder = new MediaRecorder(stream);
 
-        const origLabel = btnEl.textContent;
-        btnEl.textContent = "⏹ 녹음 완료 (클릭 시 저장)";
+        const mimeCandidates = [
+          "audio/webm;codecs=opus",
+          "audio/webm",
+          "audio/mp4",
+          "audio/ogg;codecs=opus",
+          ""
+        ];
+        let chosenMime = "";
+        for (const m of mimeCandidates) {
+          if (!m || (typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function" && MediaRecorder.isTypeSupported(m))) {
+            chosenMime = m;
+            break;
+          }
+        }
+
+        activeMicRecorder = chosenMime ? new MediaRecorder(stream, { mimeType: chosenMime }) : new MediaRecorder(stream);
+
+        const origLabel = btnEl.getAttribute("data-orig-label") || btnEl.textContent;
+        btnEl.setAttribute("data-orig-label", origLabel);
+        const origBg = btnEl.style.background;
+        activeMicStartSec = 0;
+        btnEl.textContent = "⏹ 녹음 완료 (00:00 · 클릭 시 저장)";
         btnEl.style.background = "#FFE3E3";
+
+        const badgeEl = document.getElementById(studio + "CustomVoiceStatus") || document.getElementById(studio + "CustomVoiceBadge");
+        if (badgeEl) {
+          badgeEl.textContent = "🎙️ 지금 마이크로 녹음 중입니다... 말씀을 읽으신 뒤 [⏹ 녹음 완료] 버튼을 눌러주세요.";
+        }
+
+        if (activeMicTimer) clearInterval(activeMicTimer);
+        activeMicTimer = setInterval(() => {
+          activeMicStartSec += 1;
+          const mm = String(Math.floor(activeMicStartSec / 60)).padStart(2, "0");
+          const ss = String(activeMicStartSec % 60).padStart(2, "0");
+          btnEl.textContent = `⏹ 녹음 완료 (${mm}:${ss} · 클릭 시 저장)`;
+        }, 1000);
 
         activeMicRecorder.ondataavailable = (e) => {
           if (e.data && e.data.size > 0) activeMicChunks.push(e.data);
         };
 
         activeMicRecorder.onstop = async () => {
+          if (activeMicTimer) {
+            clearInterval(activeMicTimer);
+            activeMicTimer = null;
+          }
           stream.getTracks().forEach(t => t.stop());
           btnEl.textContent = origLabel;
-          btnEl.style.background = "#FFF5F5";
+          btnEl.style.background = origBg || "#FFFFFF";
 
-          const blob = new Blob(activeMicChunks, { type: activeMicRecorder.mimeType || "audio/webm" });
+          const actualMime = (activeMicRecorder && activeMicRecorder.mimeType) || chosenMime || "audio/webm";
+          const ext = actualMime.includes("mp4") ? "m4a" : (actualMime.includes("ogg") ? "ogg" : "webm");
+          const blob = new Blob(activeMicChunks, { type: actualMime });
+          if (blob.size < 100) {
+            if (badgeEl) badgeEl.textContent = "⚠️ 녹음된 음성이 너무 짧습니다. 다시 녹음해 주세요.";
+            return;
+          }
+
           const dataUrl = await new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = e => resolve(e.target.result);
             reader.readAsDataURL(blob);
           });
 
-          const badgeEl = document.getElementById(studio + "CustomVoiceStatus") || document.getElementById(studio + "CustomVoiceBadge");
           const audioEl = document.getElementById(studio + "VoicePreviewAudio") || document.getElementById(studio + "CustomVoiceAudio");
           const selEl = document.getElementById(studio + "VoiceSelect");
           if (badgeEl) badgeEl.textContent = "⏳ 마이크 녹음 황금 보컬 마스터링 중...";
+
+          if (studio === "sermon") {
+            const res = await fetch("/api/upload-voice-as-sermon", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                filename: `마이크녹음_설교묵상.${ext}`,
+                data_base64: dataUrl,
+                title: `[마이크 육성 녹음] 오늘의 말씀 묵상`,
+                bible_verse: customStyle.bible_verse || "오늘의 말씀",
+                church_name: customStyle.church_name || "우리교회",
+                script_text: "",
+                artwork_id: customStyle.artwork_id !== "none" ? customStyle.artwork_id : "art_05",
+                target_count: targetShortsCount || 4
+              })
+            });
+            const data = await res.json();
+            if (data.ok && data.sermon) {
+              if (badgeEl) {
+                badgeEl.innerHTML = `✅ <b>마이크 직접 녹음 완료</b> (${escapeHtml(data.sermon.duration_text)})` +
+                  (data.sermon.audio_download_url ? ` <a href="${data.sermon.audio_download_url}" download="마이크녹음_황금보컬.wav" style="margin-left:8px; color:#047857; text-decoration:underline; font-weight:900;">⬇ 보정 음성(.wav) 저장</a>` : "");
+              }
+              if (audioEl && data.sermon.video_url) {
+                audioEl.src = data.sermon.video_url;
+                audioEl.style.display = "block";
+                audioEl.load();
+              }
+              appData.samples.unshift(data.sermon);
+              const sel = document.getElementById("sermonSelect");
+              if (sel) {
+                sel.innerHTML = appData.samples.map((s, idx) =>
+                  `<option value="${idx}">${escapeHtml(s.title)} (${escapeHtml(s.bible_verse)}) — ${escapeHtml(s.duration_text)}</option>`
+                ).join("");
+                sel.value = "0";
+              }
+              onSelectSermon(0);
+              if (typeof switchSermonWizardStep === "function") {
+                switchSermonWizardStep(2);
+              }
+            } else {
+              alert(data.error || "마이크 녹음 저장 중 오류가 발생했습니다.");
+            }
+            return;
+          }
 
           const res = await fetch("/api/upload-voice", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              filename: `마이크녹음_${studio}.webm`,
+              filename: `마이크녹음_${studio}.${ext}`,
               data_base64: dataUrl
             })
           });
@@ -7852,18 +8000,23 @@ ${st.error || "로그를 확인해 주세요."}`);
           if (data.ok) {
             customVoicePaths[studio] = data.path || "";
             if (selEl) selEl.value = "custom_voice";
-            if (badgeEl) badgeEl.textContent = `✓ 마이크 직접 녹음 (${data.duration}초 · 황금보컬적용)`;
+            if (badgeEl) {
+              badgeEl.innerHTML = `✓ <b>마이크 직접 녹음 완료</b> (${data.duration}초 · 황금보컬적용)` +
+                (data.url ? ` <a href="${data.url}" download="마이크녹음_${studio}_황금보컬.wav" style="margin-left:8px; color:#047857; text-decoration:underline; font-weight:900;">⬇ 녹음파일(.wav) 저장</a>` : "");
+            }
             if (audioEl && data.url) {
               audioEl.src = data.url;
-              audioEl.style.display = "inline-block";
+              audioEl.style.display = "block";
+              audioEl.load();
             }
           } else {
             alert(data.error || "녹음 저장 중 오류가 발생했습니다.");
           }
         };
 
-        activeMicRecorder.start();
+        activeMicRecorder.start(200);
       } catch (err) {
+        console.error("toggleBrowserMicRecord error:", err);
         alert("마이크 권한을 허용해 주시거나, 휴대폰으로 녹음하신 음성 파일(.m4a/.mp3/.wav)을 옆의 [파일 올리기] 버튼으로 선택해 주세요!");
       }
     }

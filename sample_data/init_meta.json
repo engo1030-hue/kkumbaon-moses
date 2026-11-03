@@ -637,7 +637,7 @@
       "church_name": "새오름교회",
       "preacher": "직접 녹음",
       "duration_text": "2분 0초 (내 육성 녹음 마스터)",
-      "video_path": "/Users/hanbeomsu/Desktop/안티/04_기타_콘텐츠/꿈바온_목회자무료쇼츠프로그램/uploads/voice_sermon_1792548200/voice_sermon_1792548200.mp4",
+      "video_path": "sample_data/sample_sermon_demo.mp4",
       "subtitles": [
         {
           "start": 0.0,
@@ -746,7 +746,7 @@
       "church_name": "우리교회",
       "preacher": "담임목사",
       "duration_text": "1분 (내장 시연용 샘플)",
-      "video_path": "/Users/hanbeomsu/Desktop/안티/04_기타_콘텐츠/꿈바온_목회자무료쇼츠프로그램/sample_data/sample_sermon_demo.mp4",
+      "video_path": "sample_data/sample_sermon_demo.mp4",
       "subtitles": [
         {
           "start": 0.0,
